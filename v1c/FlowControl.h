@@ -14,7 +14,7 @@ namespace Andromeda
 		public:
 
 			virtual void AddControl(IFlowCall callback) = 0;
-			virtual void Execute(void *const pcOutput) = 0;
+			virtual void Execute(const void *const cpcInput, void *const pcOutput) = 0;
 		};
 
 		__declspec(dllexport) long CreateFlowControl(const unsigned long dataSize, IFlowControl **const ppcOut);

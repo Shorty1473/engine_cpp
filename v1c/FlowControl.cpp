@@ -45,7 +45,7 @@ namespace an_v1_impl
 	public:
 
 		virtual void AddControl(Andromeda::Flow::IFlowCall callback);
-		virtual void Execute(void *const pcOutput);
+		virtual void Execute(const void *const cpcInput, void *const pcOutput);
 	};
 
 	flowControl::flowControl()
@@ -94,8 +94,13 @@ namespace an_v1_impl
 		}
 	}
 	
-	void flowControl::Execute(void *const pcOutput)
+	void flowControl::Execute(const void *const cpcInput, void *const pcOutput)
 	{
+		if (!cpcInput)
+			return;
+
+		memcpy(Data_, cpcInput, DataSize_);
+
 		FLOW_DATA *temp = Functions_;
 
 		while (temp != nullptr)
