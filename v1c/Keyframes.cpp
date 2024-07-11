@@ -39,14 +39,11 @@ namespace an_v1_impl
 		(*pcState).Timer = 0;
 	}
 
-	class animator :public Andromeda::Animation::IKeyframes::IAnimator
+	class animator :public Andromeda::Animation::IAnimator
 	{
 	private:
 
 		unsigned long DataSize_;
-
-		long Step_;
-		unsigned long StepCount_;
 
 		Andromeda::Animation::ANIMATOR_STATE State_;
 
@@ -55,7 +52,6 @@ namespace an_v1_impl
 
 		Andromeda::Animation::IAnimatorStep LerpCall_;
 
-		void countSteps();
 		void advanceFrame();
 
 	public:
@@ -82,20 +78,8 @@ namespace an_v1_impl
 		virtual Andromeda::Animation::ANIMATOR_STATE GetState();
 	};
 
-	void animator::countSteps()
-	{
-		StepCount_ = 0;
-		KEY_FRAME_STATE *temp = Frames_;
-		while (temp != nullptr)
-		{
-			++StepCount_;
-			temp = temp->Next;
-		}
-	}
-
 	void animator::advanceFrame()
 	{
-		++Step_;
 		Current_ = Current_->Next;
 
 		if (Current_ != nullptr)
@@ -104,8 +88,6 @@ namespace an_v1_impl
 
 	animator::animator()
 	{
-		Step_ = -1;
-		StepCount_ = 0;
 		DataSize_ = 0;
 		State_ = Andromeda::Animation::ANIMATOR_STATE::NONE;
 	}
@@ -117,8 +99,6 @@ namespace an_v1_impl
 	
 	void animator::init()
 	{
-		Step_ = 0;
-		StepCount_ = 0;
 		DataSize_ = 0;
 		State_ = Andromeda::Animation::ANIMATOR_STATE::INIT;
 
@@ -138,22 +118,24 @@ namespace an_v1_impl
 
 		if (Frames_ == nullptr)
 		{
-			StepCount_ = 0;
-
 			Frames_ = new KEY_FRAME_STATE;
-			init_KEY_FRAME_STATE(Frames_, StepCount_++, DataSize_);
+			init_KEY_FRAME_STATE(Frames_, 0, DataSize_);
 
 			(*ppcOut) = &Frames_->Frame;
 
 			return;
 		}
 
+		unsigned long count = 1;
 		KEY_FRAME_STATE *temp = Frames_;
 		while (temp->Next != nullptr)
+		{
+			++count;
 			temp = temp->Next;
+		}
 
 		temp->Next = new KEY_FRAME_STATE;
-		init_KEY_FRAME_STATE(temp->Next, StepCount_, DataSize_);
+		init_KEY_FRAME_STATE(temp->Next, count, DataSize_);
 
 		(*ppcOut) = &temp->Next->Frame;
 	}
@@ -189,7 +171,6 @@ namespace an_v1_impl
 	{
 		if (State_ == Andromeda::Animation::ANIMATOR_STATE::INIT)
 		{
-			countSteps();
 			State_ = Andromeda::Animation::ANIMATOR_STATE::PLAY;
 
 			Current_ = Frames_;
@@ -200,7 +181,6 @@ namespace an_v1_impl
 
 		if (State_ == Andromeda::Animation::ANIMATOR_STATE::STOP || State_ == Andromeda::Animation::ANIMATOR_STATE::DONE)
 		{
-			countSteps();
 			State_ = Andromeda::Animation::ANIMATOR_STATE::PLAY;
 
 			Current_ = Frames_;
@@ -306,7 +286,7 @@ namespace an_v1_impl
 
 	public:
 
-		virtual long GetAnimator(const unsigned long dataSize, IAnimator **const ppcOut, Andromeda::Animation::IAnimatorStep lerpFunc);
+		virtual long GetAnimator(const unsigned long dataSize, Andromeda::Animation::IAnimator **const ppcOut, Andromeda::Animation::IAnimatorStep lerpFunc);
 	};
 
 	keyFrames::keyFrames()
@@ -324,7 +304,7 @@ namespace an_v1_impl
 		setup_ANIMATORS(&Head_);
 	}
 	
-	long keyFrames::GetAnimator(const unsigned long dataSize, IAnimator **const ppcOut, Andromeda::Animation::IAnimatorStep lerpFunc)
+	long keyFrames::GetAnimator(const unsigned long dataSize, Andromeda::Animation::IAnimator **const ppcOut, Andromeda::Animation::IAnimatorStep lerpFunc)
 	{
 		if (!ppcOut)
 			return -1;
